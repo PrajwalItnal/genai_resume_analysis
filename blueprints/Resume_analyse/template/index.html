@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Gen AI Resume Analysis{% endblock %}
+
+{% block head %}
+<style>
+     /* Background of the page */
+     body{
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 0;
+        margin: 0;
+        height: 100vh;
+        background: linear-gradient(135deg, #89f7fe, #66a6ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid #ccc;
+        margin: 20px auto;
+     }
+
+    /* Main box styling */
+    .main-box{
+        padding: 65px;
+        max-width: 700px;
+        position: relative;
+        border-radius: 20px;
+        box-shadow: 0px 12px 50px rgb(236, 195, 195);
+        background: #f5f1f1cc;
+        z-index: 1;
+    }
+
+    .main-box:hover{
+        box-shadow: 0px 12px 50px rgb(46, 42, 42);
+        transform: translateY(-10px);
+        transition: all 0.3s ease-in-out;
+    }
+
+    .main-box h1{
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .error{
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #d79ca2;
+        color: rgb(0, 0, 0);
+        text-align: center;
+    }
+    
+    .main-box form{
+        display: flex;
+        flex-direction: column;
+    }
+
+    .main-box form input[type =  "file"]{
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        transition: all 0.3s ease;
+    }
+
+    .main-box form input[type =  "file"]:hover{
+        background-color: #f1e7e7;
+    }
+
+    .main-box form input[type =  "file"]:active, .main-box form input[type =  "file"]:focus{
+        border: 2px solid #000;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+        outline: none;
+        box-shadow: 0px 0px 10px #4f4848;
+    }
+
+    .main-box select{
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        transition: all 0.3s ease;
+    }
+
+    .main-box select:hover{
+        background-color: #f1e7e7;
+    }
+
+    .main-box select:active, .main-box select:focus{
+        border: 2px solid #000;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+        outline: none;
+        box-shadow: 0px 0px 10px #4f4848;
+    }
+
+    .main-box select option {
+    padding: 10px;
+    background-color: #fff;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    }
+
+    .main-box form button[type =  "submit"]{
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+        cursor: pointer;
+    }
+    .main-box form button[type =  "submit"]:hover{
+        background-color: #f1e7e7;
+        box-shadow: 0px 0px 50px #5999c4;
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-box">
+    <h1>Welcome To Resume Analysis</h1>
+
+    {% with messages = get_flashed_messages(with_categories = true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p class="{{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form id="analyse-form" action="{{url_for('analyse.index')}}" method="POST" enctype="multipart/form-data">
+        <p>Upload the resume:</p>
+        <input type="file" accept=".pdf,.docx" name="file" required="required"><br>
+        <p>Select the role:</p>
+        <select name="Role">
+            <option value="">Default</option>
+            <option value="Software Engineer">Software Engineer</option>
+            <option value="Data Scientist">Data Scientist</option>
+            <option value="AI Engineer">AI Engineer</option>
+            <option value="Java Developer">Java Developer</option>
+            <option value="Python Developer">Python Developer</option>
+        </select>
+        <button type="submit">Analyse</button>
+    </form>
+</div>
+{% endblock %}
