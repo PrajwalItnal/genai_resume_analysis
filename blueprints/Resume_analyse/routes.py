@@ -104,7 +104,7 @@ def extract_text(file):
     with pdfplumber.open(file) as pdf:
         text = ""
         for page in pdf.pages:
-            text += page.extract_text() + "\n"      
+            text += page.extract_text() + "\n"     
     return text
 
 

@@ -132,7 +132,7 @@ footer {
             <path class="speedometer-arc" d="M 10 100 A 90 90 0 0 1 190 100"
                   stroke-dasharray="{{report.points * 2.83}}, 283" />
         </svg>
-        <div class="needle" style="transform: rotate({{report.points * 1.8 - 90}}deg);"></div>
+        <div class="needle" [style.transform]="'rotate(' + (report.points * 1.8 - 90) + 'deg)'"></div>
         <div style="position:absolute; width:100%; bottom:0; text-align:center; font-weight:bold; color:#333;">{{report.points}}%</div>
     </div>
 
@@ -153,16 +153,24 @@ footer {
 
     <h2>Key Skills Matched</h2>
     <div class="strengths">
-        {% for skill in report.key_skills %}
-            <span class="badge">{{skill}}</span>
-        {% endfor %}
+        {% if report.key_skills %}
+            {% for skill in report.key_skills %}
+                <span class="badge">{{skill}}</span>
+            {% endfor %}
+        {% else %}
+            <span class="badge">None</span>
+        {% endif %}
     </div>
 
     <h2>Missing Skills</h2>
     <div class="missing-skills">
-        {% for skill in report.missing_skills %}
-            <span class="badge">{{skill}}</span>
-        {% endfor %}
+        {% if report.missing_skills %}
+            {% for skill in report.missing_skills %}
+                <span class="badge">{{skill}}</span>
+            {% endfor %}
+        {% else %}
+            <span class="badge">None</span>
+        {% endif %}
     </div>
 
     <h2>Drawbacks</h2>
