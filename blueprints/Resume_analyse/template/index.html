@@ -1,150 +1,663 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analysis - Powered by Gemini</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Gen AI Resume Analysis{% endblock %}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a0033, #330066, #0d001a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+            padding: 20px;
+        }
 
-{% block head %}
-<style>
-     /* Background of the page */
-     body{
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        padding: 0;
-        margin: 0;
-        height: 100vh;
-        background: linear-gradient(135deg, #89f7fe, #66a6ff);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        border: 1px solid #ccc;
-        margin: 20px auto;
-     }
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(76, 154, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            animation: float 20s ease-in-out infinite;
+        }
 
-    /* Main box styling */
-    .main-box{
-        padding: 65px;
-        max-width: 700px;
-        position: relative;
-        border-radius: 20px;
-        box-shadow: 0px 12px 50px rgb(236, 195, 195);
-        background: #f5f1f1cc;
-        z-index: 1;
-    }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -30%;
+            left: -30%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(255, 76, 154, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            animation: floatReverse 25s ease-in-out infinite;
+        }
 
-    .main-box:hover{
-        box-shadow: 0px 12px 50px rgb(46, 42, 42);
-        transform: translateY(-10px);
-        transition: all 0.3s ease-in-out;
-    }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -30px); }
+        }
 
-    .main-box h1{
-        text-align: center;
-        margin-bottom: 30px;
-    }
+        @keyframes floatReverse {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-40px, 40px); }
+        }
 
-    .error{
-        padding: 10px;
-        border-radius: 5px;
-        background-color: #d79ca2;
-        color: rgb(0, 0, 0);
-        text-align: center;
-    }
-    
-    .main-box form{
-        display: flex;
-        flex-direction: column;
-    }
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    .main-box form input[type =  "file"]{
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        background-color: #fff;
-        transition: all 0.3s ease;
-    }
+        .main-box {
+            padding: 60px;
+            max-width: 650px;
+            width: 100%;
+            position: relative;
+            border-radius: 25px;
+            background: rgba(20, 20, 35, 0.8);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5),
+                        0 0 100px rgba(138, 43, 226, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            z-index: 11;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            animation: slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: translateY(40px);
+        }
 
-    .main-box form input[type =  "file"]:hover{
-        background-color: #f1e7e7;
-    }
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-    .main-box form input[type =  "file"]:active, .main-box form input[type =  "file"]:focus{
-        border: 2px solid #000;
-        transition: all 0.3s ease;
-        border-radius: 2px;
-        outline: none;
-        box-shadow: 0px 0px 10px #4f4848;
-    }
+        .main-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #8a2be2, transparent);
+            border-radius: 25px 25px 0 0;
+            animation: shimmer 3s ease-in-out infinite;
+        }
 
-    .main-box select{
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        background-color: #fff;
-        transition: all 0.3s ease;
-    }
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
 
-    .main-box select:hover{
-        background-color: #f1e7e7;
-    }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
 
-    .main-box select:active, .main-box select:focus{
-        border: 2px solid #000;
-        transition: all 0.3s ease;
-        border-radius: 2px;
-        outline: none;
-        box-shadow: 0px 0px 10px #4f4848;
-    }
+        .logo {
+            font-size: 48px;
+            margin-bottom: 15px;
+            animation: pulse 2s ease-in-out infinite;
+        }
 
-    .main-box select option {
-    padding: 10px;
-    background-color: #fff;
-    color: #333;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 5px;
-    }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
 
-    .main-box form button[type =  "submit"]{
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        background-color: #fff;
-        transition: all 0.3s ease;
-        margin-top: 20px;
-        cursor: pointer;
-    }
-    .main-box form button[type =  "submit"]:hover{
-        background-color: #f1e7e7;
-        box-shadow: 0px 0px 50px #5999c4;
-        transform: scale(1.05);
-    }
-</style>
-{% endblock %}
+        .main-box h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8a2be2, #ff1493, #8a2be2);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1.5px;
+            animation: gradientShift 4s ease infinite;
+            margin-bottom: 8px;
+        }
 
-{% block content %}
-<div class="main-box">
-    <h1>Welcome To Resume Analysis</h1>
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
 
-    {% with messages = get_flashed_messages(with_categories = true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <p class="{{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
 
-    <form id="analyse-form" action="{{url_for('analyse.index')}}" method="POST" enctype="multipart/form-data">
-        <p>Upload the resume:</p>
-        <input type="file" accept=".pdf,.docx" name="file" required="required"><br>
-        <p>Select the role:</p>
-        <select name="Role">
-            <option value="">Default</option>
-            <option value="Software Engineer">Software Engineer</option>
-            <option value="Data Scientist">Data Scientist</option>
-            <option value="AI Engineer">AI Engineer</option>
-            <option value="Java Developer">Java Developer</option>
-            <option value="Python Developer">Python Developer</option>
-        </select>
-        <button type="submit">Analyse</button>
-    </form>
-</div>
-{% endblock %}
+        .ai-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #8a2be2, #ff1493);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .error {
+            padding: 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(255, 76, 76, 0.2), rgba(255, 107, 107, 0.1));
+            border: 1px solid rgba(255, 107, 107, 0.5);
+            color: #ff6b6b;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.15);
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+            animation: fadeIn 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+        .form-group:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 12px;
+            color: #e0e0e0;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 45px 30px;
+            border: 3px dashed #8a2be2;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.08), rgba(255, 20, 147, 0.04));
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: #8a2be2;
+            font-weight: 700;
+            font-size: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-input-label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.15), transparent);
+            animation: shine 3s ease-in-out infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .file-input-label:hover {
+            border-color: #ff1493;
+            background: linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(138, 43, 226, 0.06));
+            color: #ff1493;
+            transform: scale(1.02);
+            box-shadow: 0 12px 35px rgba(255, 20, 147, 0.25);
+        }
+
+        .file-input-label-text {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-icon {
+            font-size: 40px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .file-info {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        select {
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            background: rgba(30, 30, 50, 0.6);
+            color: #e0e0e0;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a2be2' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 18px;
+            padding-right: 45px;
+            width: 100%;
+        }
+
+        select:hover {
+            border-color: #ff1493;
+            background-color: rgba(30, 30, 50, 0.8);
+            box-shadow: 0 8px 25px rgba(138, 43, 226, 0.2);
+            transform: translateY(-2px);
+        }
+
+        select:focus {
+            border: 1px solid #ff1493;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 20, 147, 0.15),
+                        0 8px 25px rgba(255, 20, 147, 0.25);
+        }
+
+        select option {
+            background-color: #1e1e32;
+            color: #e0e0e0;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        button[type="submit"] {
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #8a2be2, #ff1493, #8a2be2);
+            background-size: 200% 200%;
+            color: white;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-top: 30px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            box-shadow: 0 12px 40px rgba(138, 43, 226, 0.3);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        button[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.25);
+            transition: left 0.5s ease;
+        }
+
+        button[type="submit"]:hover {
+            background: linear-gradient(135deg, #ff1493, #8a2be2, #ff1493);
+            transform: translateY(-4px);
+            box-shadow: 0 18px 50px rgba(138, 43, 226, 0.4),
+                        0 0 50px rgba(255, 20, 147, 0.25);
+        }
+
+        button[type="submit"]:hover::before {
+            left: 100%;
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(-2px);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 20, 0.95);
+            backdrop-filter: blur(3px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeInScale 0.5s ease;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .spinner-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid transparent;
+            border-top-color: #8a2be2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-ring:nth-child(2) {
+            border-top-color: #ff1493;
+            animation-duration: 1.5s;
+            animation-direction: reverse;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8a2be2, #ff1493, #8a2be2);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            margin-bottom: 15px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: #aaa;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        .capabilities {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(138, 43, 226, 0.25);
+        }
+
+        .capability {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(138, 43, 226, 0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .capability:hover {
+            background: rgba(138, 43, 226, 0.15);
+            border-color: rgba(255, 20, 147, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .capability-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .capability-text {
+            font-size: 12px;
+            color: #aaa;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .tech-stack {
+            margin-top: 25px;
+            text-align: center;
+            padding: 15px;
+            background: rgba(138, 43, 226, 0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+        }
+
+        .tech-stack-title {
+            font-size: 12px;
+            color: #888;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tech-badges {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.25), rgba(255, 20, 147, 0.12));
+            color: #8a2be2;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <div class="loading-text">Analyzing Resume</div>
+            <div class="loading-subtext">AI is processing your document<span class="loading-dots"></span></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-box">
+            <div class="header">
+                <div class="logo">🤖</div>
+                <h1>Resume Intelligence</h1>
+                <p class="subtitle">Advanced AI-Powered Analysis</p>
+                <span class="ai-badge">✨ Powered by Gemini Flash 2.5</span>
+            </div>
+
+            <form id="analyse-form" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label">📄 Upload Your Resume</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file-input" accept=".pdf,.docx" name="file" required>
+                        <label for="file-input" class="file-input-label">
+                            <div class="file-input-label-text">
+                                <span class="file-icon">📎</span>
+                                <span>Drag & Drop Your Resume</span>
+                                <div class="file-info">or click to browse (PDF, DOCX)</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="role-select">💼 Target Role</label>
+                    <select id="role-select" name="Role" required>
+                        <option value="">Select a position...</option>
+                        <option value="Software Engineer">🔧 Software Engineer</option>
+                        <option value="Data Scientist">📊 Data Scientist</option>
+                        <option value="AI Engineer">🤖 AI Engineer</option>
+                        <option value="Java Developer">☕ Java Developer</option>
+                        <option value="Python Developer">🐍 Python Developer</option>
+                        <option value="Data Analyst">📈 Data Analyst</option>
+                        <option value="Prompt Engineer">✍️ Prompt Engineer</option>
+                        <option value="Backend Developer">⚙️ Backend Developer</option>
+                        <option value="Cyber Security">🔒 Cyber Security</option>
+                        <option value="Network Engineer">🌐 Network Engineer</option>
+                        <option value="Software Developer">💻 Software Developer</option>
+                    </select>
+                </div>
+
+                <button type="submit">✨ Analyze Resume</button>
+
+                <div class="capabilities">
+                    <div class="capability">
+                        <span class="capability-icon">⚡</span>
+                        <span class="capability-text">Instant Analysis</span>
+                    </div>
+                    <div class="capability">
+                        <span class="capability-icon">🎯</span>
+                        <span class="capability-text">Skill Extraction</span>
+                    </div>
+                    <div class="capability">
+                        <span class="capability-icon">💡</span>
+                        <span class="capability-text">AI Insights</span>
+                    </div>
+                    <div class="capability">
+                        <span class="capability-icon">📊</span>
+                        <span class="capability-text">Detailed Scoring</span>
+                    </div>
+                </div>
+
+                <div class="tech-stack">
+                    <div class="tech-stack-title">Technology Stack</div>
+                    <div class="tech-badges">
+                        <span class="tech-badge">Gemini Flash 2.5</span>
+                        <span class="tech-badge">Flask</span>
+                        <span class="tech-badge">Python</span>
+                        <span class="tech-badge">NLP</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('analyse-form').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('file-input');
+            const roleSelect = document.getElementById('role-select');
+            
+            if (fileInput.files.length > 0 && roleSelect.value) {
+                // Show loading overlay
+                document.getElementById('loadingOverlay').classList.add('active');
+                
+                // Disable submit button
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+            }
+        });
+
+        // Update file label when file is selected
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                const label = document.querySelector('.file-input-label-text span:nth-child(2)');
+                label.textContent = fileName;
+            }
+        });
+    </script>
+</body>
+</html>
